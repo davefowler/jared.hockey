@@ -20,7 +20,7 @@ class sensorclass:
     def __init__(self):
         """Communicates with the CMUCam2"""
         #initialize variables
-    
+
         self.Y = 127  #pixel width in Y direction
         self.xscale=2.2
         Y = self.Y
@@ -28,7 +28,7 @@ class sensorclass:
         #initialize past data
         self.x = []
         self.y = []
-        self.DTx = [] 
+        self.DTx = []
         self.DTy = []
         self.dt = []
         self.vxar = []
@@ -43,13 +43,13 @@ class sensorclass:
         f = open(self.fname, 'w')
         f.write('x\ty\tDTx\tDTy\tv\ttheta\tt\txf\tyf\n')
         f.close()
-       
+
 
     def prediction(self, m, b, vx, newx):
         """USAGE: theta, t = prediction(self, m, b, vx, newx)
         Returns a prediction of where the puck will end up and how long it will take it to get there.
         """
-                
+
         Y = self.Y
         notime = 999
         maxtheta = 60
@@ -79,12 +79,12 @@ class sensorclass:
             try:
                 x1=(pow((pow(m,2)+1)*pow(r,2)-pow(b,2)+2*b*(m*xo+(yo+q*Y))-pow(m,2)*pow(xo,2)-2*m*xo*(yo+q*Y)-pow((yo+q*Y),2),.5)-b*m+m*(yo+q*Y)-xo)/(pow(m,2)+1)
                 x2=-(pow((pow(m,2)+1)*pow(r,2)-pow(b,2)+2*b*(m*xo+(yo+q*Y))-pow(m,2)*pow(xo,2)-2*m*xo*(yo+q*Y)-pow((yo+q*Y),2),.5)+b*m-m*(yo+q*Y)+xo)/(pow(m,2)+1)
-                break 
+                break
             except:
                 if y <= q*Y+Y and y>= q*Y:
                     if y > q*Y+yo: return pow(-1, q)*maxtheta, notime
                     return -pow(-1,q)*maxtheta, notime
-        
+
         xf=max(x1,x2)
         yf=m*xf+b
 
@@ -92,7 +92,7 @@ class sensorclass:
         #for tests only
         self.xf = xf
         self.yf = yf
-        #end for tests only        
+        #end for tests only
         theta =  pow(-1, q)*math.degrees(math.atan((yf-yo-Y*q)/(xf+xo)))
         if vx == 0: vx = .0001
         t = (newx-xf)/vx
@@ -106,27 +106,27 @@ class sensorclass:
 
         returns theta, t
         """
-    
+
         notime = 999
         newx, newy = cmu.getPos()
         newx=round(newx*self.xscale)
         newy = newy
-        
+
         #print 'x = ' + str(newx) + 'y = ' + str(newy)
         #try:
         self.oT = self.nT
         #except:
         #    oldT = time.clock()
-        self.nT = time.clock()	
+        self.nT = time.clock()
         newdt = self.nT-self.oT
 
         if not (newx and newy):
             # returns 0, notime when there is no new data.
-            
+
             #clear past data
             self.x = []
             self.y = []
-            self.DTx = [] 
+            self.DTx = []
             self.DTy = []
             self.dt = []
             self.vxar = []
@@ -134,7 +134,7 @@ class sensorclass:
 
         elif not(self.DTx and self.DTy):
             # returns 0, notime when there is no historical data.
-            
+
             #update historical data
             self.x.append(newx)
             self.DTx.append(newx)
@@ -151,7 +151,7 @@ class sensorclass:
             #reset past data
             self.x = [newx]
             self.y = [newy]
-            self.DTx = [newx] 
+            self.DTx = [newx]
             self.DTy = [newy]
             self.dt = [newdt]
             self.vxar = []
@@ -162,19 +162,19 @@ class sensorclass:
         self.dt.append(newdt)
         self.vxar.append((self.x[-2]-self.x[-1])/self.dt[-1])
         self.vx = sum(self.vxar)/len(self.vxar)
-        
+
         # the puck is comming our way!  Lets make a prediction!
 
         # Apply the Dave Transform for the newx and newy values
-        # this will add the transposed value to the DTx and DTy transposed 
+        # this will add the transposed value to the DTx and DTy transposed
         # coordinate array
         self.DTx, self.DTy = DT(self.DTx, self.DTy, newx, newy, self.Y)
-        
-           
+
+
         # get the bestfit parameters of the data
         self.m, self.b, self.r = bestfit(self.DTx, self.DTy)
 
-        
+
         self.theta, self.t = self.prediction(self.m, self.b, self.vx, newx)
 
         #START for test purposes only
@@ -185,9 +185,9 @@ class sensorclass:
             f.write( str(self.x[-1])+'\t'+str(self.y[-1])+'\t'+str(self.DTx[-1])+'\t'+str(self.DTy[-1])+'\t'+str(self.vx)+'\t'+str(self.theta)+'\t'+str(self.t)+'\t'+str(self.xf)+'\t'+str(self.yf)+'\n')
             f.close()
         #END for test purposes only
-            
+
         return self.theta, self.t
-        
+
         #also need to apply a simple function to do conversion to cm, but perhapse more easily we could convert the theta of the arm into pixels
 
 
@@ -225,7 +225,7 @@ class brain:
         self.arm = armclass()
         self.sensor = sensorclass()
         self.actuator_delay = 0
-        
+
     def play(self):
         """Loop to play the game"""
         cnt = 100
@@ -233,14 +233,14 @@ class brain:
         while cnt:
             #for testing use
             #cnt = cnt - 1
-            
+
             theta, t = self.sensor.look()
-    
-            if t - actdelay <= (1/25):                
+
+            if t - actdelay <= (1/25):
                 #time.sleep(t-actdelay)
                 self.arm.hit()
                 print 'i hit'
-                
+
             if abs(theta) > 0:
                 print 'theta = ' + str(theta) + '\tt = ' + str(t)
             self.arm.move(theta)
@@ -255,27 +255,27 @@ class brain:
         bigrico = []
         bigactual = []
         cnt = 30
-        fnum = 0        
+        fnum = 0
         for j in range(cnt):
             fnum = fnum+1
             richochet = []
             tarray = []
             timear = []
-            while 1:            
+            while 1:
                 theta, t = self.sensor.look()
-                                    
+
                 if len(tarray) >= 1 and abs(tarray[-1])>0 and theta == 0:
                     actual = input(str(j) + '. angle: ')
-                    
+
                     #f = open('trial'+str(fnum)+'.txt', 'w')
                     #for k in range(len(tarray)):
                         #f.write(str(tarray(k))+'\t'+str(actual)+'\t'+str(timear(k))+'\t'+str(ricochet)+'\n')
                     break
 
-                    
+
                 else:
                     if theta > 0:
-                        tarray.append(theta)   
+                        tarray.append(theta)
                         timear.append(t)
                         if not(self.sensor.DTy[-1]== self.sensor.y[-1]):
                             richochet.append(1)
@@ -289,7 +289,7 @@ class brain:
             bigrico.append(richochet)
             bigactual.append(actual)
 
-        
+
         #analyze the data
         norico = []
         rico = []
@@ -298,14 +298,14 @@ class brain:
             #before and after richochet
 
             #NOTE:  The ricochet and non richoche data only collects if there was a ricochet somwewhere in the hit
-            #therefore the Before Ricochet is not counting striaght line pucks.  This would not be what we want.            
+            #therefore the Before Ricochet is not counting striaght line pucks.  This would not be what we want.
             for t in range(len(bigrico[k])):
                 if not(bigrico[k][t]) and sum(bigrico[k])>0:
                     norico.append(abs(bigtheta[k][t] - bigactual[k]))
                 elif bigrico[k][t]:
                     #make sure that you're not counting data that never has a ricochet
                     rico.append(abs(bigtheta[k][t] - bigactual[k]))
-        lens = []                       
+        lens = []
         for k in range(len(bigactual)):
             lens.append(len(bigtheta[k]))
         maxlen = max(lens)
@@ -316,9 +316,9 @@ class brain:
             for k in range(len(bigactual)):
                 if len(bigtheta[k]) > j:
                     oned.append(bigtheta[k][j]- bigactual[k])
-            
+
             points.append(oned)
-            
+
         print
         print '********************************'
         print 'TEST RESULTS'
@@ -326,22 +326,22 @@ class brain:
         print 'These results are the average deviation of the predicted result from the actual'
         print
 
-              
+
         if len(rico) == 0:
             print 'AFTER RICHOCHET       NO DATA'
         else:
             print 'AFTER RICOCHET:       ' + str( sum(rico)/len(rico))
         if len(norico) == 0:
-            print 'BEFORE RICOCHET:   NO DATA'  
+            print 'BEFORE RICOCHET:   NO DATA'
         else:
             print 'BEFORE RICOCHET:   ' + str( sum(norico)/len(norico))
         print
         print 'NUMBER OF POINTS:'
         for j in range(len(points)):
             print str(j) +'\t'+str(sum(points[j])/len(points[j]))
-            
+
         print '********************************'
 
-    
+
 Jared = brain()
 Jared.test()

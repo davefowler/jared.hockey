@@ -1,17 +1,12 @@
 #! /usr/bin/env python
 
-#import time
-#from cmucam import cmucam
-
-#cmu = cmucam()
-
 def mult(x, y): return x*y
 
 def bestfit(x, y):
     """Usage: bestfit(x, y)
     x   array of x coordinates
-    y   array of y coordinates 
-    
+    y   array of y coordinates
+
     returns the slope, y-intercept, and autocorrelation of the bestfit line
     return m, b, r"""
     sx = sum(x)
@@ -28,8 +23,8 @@ def bestfit(x, y):
         m = (n*sxy - sx*sy)/(n*sxx-sx2)
     except:
         m = 9999
-        
-    #y intercept 
+
+    #y intercept
     b = (sy - m*sx)/n
 
     #auto correlation
@@ -37,14 +32,14 @@ def bestfit(x, y):
         r = (n*sxy-sx*sy)/(pow(n*sxx-sx2, .5)*pow(n*syy-sy2, .5))
     except:
         r = 1
-        
+
     return m, b, r
 
 def mky(y, Y, k):
     """Make Y.  Return a propogated value for y.  This accounts for the fact that on odd bounces the y is traveling in reverse direction.
     y   Raw Coordinate
     Y   Max Width in Y direction
-    k   Number of bounces 
+    k   Number of bounces
     """
     odd = k%2
     if odd:
@@ -58,10 +53,10 @@ def imky(y, Y, k):
     if odd:
         return Y+(k*Y-y)
     return y-k*Y
-    
+
 
 def DT(x, y, newx, newy, Y):
-    """The Dave Transform: transforms data confined by the y direction, 
+    """The Dave Transform: transforms data confined by the y direction,
     bouncing off the borders at a known distance Y, into its unconfined x, y dimensions.
 
     The dave transform recognizes bounces assuming a constant velocity in the x and y directions with reflections having the same exiting angle as incident.
@@ -81,25 +76,25 @@ def DT(x, y, newx, newy, Y):
         y.append(newy)
         return x, y
 
-    elif n == 3: 
+    elif n == 3:
         #do a longer transform to make sure the first two points were aligned
-        
+
         k = y[-1]/Y
         y1, y2 = [a for a in y]
         y2b = imky(y2, Y, k)
 
         #Try all possible orderings of y
 
-	#positive reflection possibilities
+    #positive reflection possibilities
 
         #reflection after 1st point
         y_opt2 = [y1, mky(y2b, Y, k+1), mky(newy, Y, k+1)]
         #reflection after 2nd point
         y_opt3 = [y1, y2, mky(newy, Y, k+1)]
-	
-	options = [y_opt2, y_opt3]
 
-	# negative reflections
+    options = [y_opt2, y_opt3]
+
+    # negative reflections
 
         #no reflections
         y_opt1 = [y1, y2, mky(newy, Y, k)]
@@ -108,31 +103,31 @@ def DT(x, y, newx, newy, Y):
         #reflection after 2nd point
         y_opt3 = [y1, y2, mky(newy, Y, k-1)]
 
-	options.extend([y_opt1, y_opt2, y_opt3])
+    options.extend([y_opt1, y_opt2, y_opt3])
 
-	
+
         #find the option that best fits a line
 
-	rs = [abs(bestfit(x, y_opt)[2]) for y_opt in options]
-        
-	
+    rs = [abs(bestfit(x, y_opt)[2]) for y_opt in options]
+
+
         #return the cordinates that best fit the line
         return x, options[ rs.index(max(rs)) ]
 
     elif n > 3:
 
-        #it must determine whether the puck fits the line better 
+        #it must determine whether the puck fits the line better
         #assuming a bounce or assuming no bounce
         k = y[-1]/Y
         y_nobounce = [a for a in y]
         y_nobounce.append(mky(newy, Y, k))
         y_bounce = [a for a in y]
         y_bounce.append(mky(newy, Y, k+1))
-	y_negbounce = [a for a in y]
-	y_negbounce.append(mky(newy, Y, k-1))
-	
-	options = [y_bounce, y_nobounce, y_negbounce]
-	rs = [abs(bestfit(x, y_opt)[2]) for y_opt in options]
+    y_negbounce = [a for a in y]
+    y_negbounce.append(mky(newy, Y, k-1))
+
+    options = [y_bounce, y_nobounce, y_negbounce]
+    rs = [abs(bestfit(x, y_opt)[2]) for y_opt in options]
         return x, options[ rs.index(max(rs)) ]
 
 
@@ -168,8 +163,8 @@ if __name__ == "__main__":
         dtx, dty = DT(dtx, dty, g+1, z, Y)
         #print dtx
         #print dty
-    
-    
+
+
     print ''
     print f
     print dty
